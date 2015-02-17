@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Ascend.Data.Import.Horus
 {
     [AscendDataSetImportProviderAttribute(ProviderName = "HorusExportParser", Version = "1.0.0")]
-    public class HorusMetadataParser<TData> : GenericLogParser<TData>, IDataSetImporter<TData>
+    public class HorusMetadataParser<TData> : GenericLogParser<TData>, IDataSetImporter<TData,HorusMetadataParserOptions>
     {
         private const string TABLE_HEADER_START = "Frame;";
         private const string DATA_SEPERATOR = ";";
@@ -73,10 +73,10 @@ namespace Ascend.Data.Import.Horus
         }
         public Task ImportDataSetsAsync(AscendDataSetImporter importer, IDictionary<string, TData> logs, IDictionary<string, TData> data)
         {
-            return ImportDataSetsAsync(importer, logs, data, true);
+            return ImportDataSetsAsync(importer, logs, data, new HorusMetadataParserOptions() );
         }
 
-        public async Task ImportDataSetsAsync(AscendDataSetImporter importer, IDictionary<string, TData> logs, IDictionary<string, TData> data, bool verifyImages)
+        public async Task ImportDataSetsAsync(AscendDataSetImporter importer, IDictionary<string, TData> logs, IDictionary<string, TData> data, HorusMetadataParserOptions options)
         {
             var log = logs.Keys.FirstOrDefault(k => Path.GetExtension(k).Equals(".csv", StringComparison.OrdinalIgnoreCase));
 
@@ -96,7 +96,9 @@ namespace Ascend.Data.Import.Horus
 
                 gpsEntry.ItemType = "horus.frame";
                 gpsEntry.SetGeographyInformation(4326, "Longitude", "Latitude", "Altitude");
-                gpsEntry.WriteCmlzPosition("Longitude", "Latitude", Time: "Stamp");
+                gpsEntry.AddPositionSample("Longitude", "Latitude", Time: "Stamp", Height:options.WriteAltitudeMeasurement?"Altitude":null);
+                
+                
             }
         }
 
